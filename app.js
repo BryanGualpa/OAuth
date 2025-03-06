@@ -22,9 +22,36 @@ const REDIRECT_URI = process.env.REDIRECT_URI;
 
 // Ruta principal
 app.get('/', (req, res) => {
+  // Página de inicio con Bootstrap
   res.send(`
-    <h1>Bienvenido a la App con OAuth</h1>
-    <a href="/login">Iniciar Sesión con GitHub</a>
+  <!DOCTYPE html>
+  <html lang="es">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Inicio - GitHub OAuth</title>
+      <!-- Bootstrap CSS -->
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    </head>
+    <body class="bg-light">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+          <a class="navbar-brand" href="/">Mi App OAuth</a>
+        </div>
+      </nav>
+
+      <div class="container d-flex flex-column justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="text-center">
+          <h1 class="mb-4">Bienvenido a la App con OAuth y GitHub</h1>
+          <p class="lead mb-4">Esta aplicación te permite autenticarte con GitHub y ver tu perfil.</p>
+          <a class="btn btn-primary btn-lg" href="/login">Iniciar Sesión con GitHub</a>
+        </div>
+      </div>
+
+      <!-- Bootstrap JS (opcional, si necesitas funcionalidad de componentes) -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+  </html>
   `);
 });
 
@@ -49,7 +76,23 @@ app.get('/callback', async (req, res) => {
   const { code } = req.query;
 
   if (!code) {
-    return res.send('No se recibió el código de autorización.');
+    return res.send(`
+      <html>
+        <head>
+          <meta charset="UTF-8"/>
+          <title>Error</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+        </head>
+        <body class="bg-light">
+          <div class="container pt-5">
+            <div class="alert alert-danger" role="alert">
+              No se recibió el código de autorización. 
+            </div>
+            <a class="btn btn-secondary" href="/">Regresar al inicio</a>
+          </div>
+        </body>
+      </html>
+    `);
   }
 
   try {
@@ -77,13 +120,31 @@ app.get('/callback', async (req, res) => {
     res.redirect('/profile');
   } catch (error) {
     console.error('Error al obtener el token de acceso:', error.message);
-    res.send('Ocurrió un error al obtener el token de acceso');
+    res.send(`
+      <html>
+        <head>
+          <meta charset="UTF-8"/>
+          <title>Error</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+        </head>
+        <body class="bg-light">
+          <div class="container pt-5">
+            <div class="alert alert-danger" role="alert">
+              Ocurrió un error al obtener el token de acceso.
+            </div>
+            <p>${error.message}</p>
+            <a class="btn btn-secondary" href="/">Regresar al inicio</a>
+          </div>
+        </body>
+      </html>
+    `);
   }
 });
 
 // Ruta protegida que requiere un access token
 app.get('/profile', async (req, res) => {
   if (!req.session.accessToken) {
+    // Si no hay token en sesión, redirigimos al inicio
     return res.redirect('/');
   }
 
@@ -96,17 +157,66 @@ app.get('/profile', async (req, res) => {
     });
 
     const user = userResponse.data;
+
     res.send(`
-      <h1>Perfil de Usuario en GitHub</h1>
-      <p>Usuario: ${user.login}</p>
-      <p>ID: ${user.id}</p>
-      <img src="${user.avatar_url}" alt="avatar" width="100" />
-      <br>
-      <a href="/logout">Cerrar Sesión</a>
+      <!DOCTYPE html>
+      <html lang="es">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <title>Perfil - GitHub OAuth</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+        </head>
+        <body class="bg-light">
+          <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+              <a class="navbar-brand" href="/">Mi App OAuth</a>
+              <div>
+                <a class="btn btn-outline-light" href="/logout">Cerrar Sesión</a>
+              </div>
+            </div>
+          </nav>
+
+          <div class="container pt-5">
+            <div class="row justify-content-center">
+              <div class="col-md-6">
+                <div class="card shadow">
+                  <div class="card-body text-center">
+                    <h3 class="card-title mb-4">Perfil de Usuario en GitHub</h3>
+                    <img src="${user.avatar_url}" alt="avatar" class="rounded-circle mb-3" width="100" />
+                    <p class="card-text"><strong>Usuario:</strong> ${user.login}</p>
+                    <p class="card-text"><strong>ID:</strong> ${user.id}</p>
+                    <p class="card-text"><strong>URL de GitHub:</strong> <a href="${user.html_url}" target="_blank">${user.html_url}</a></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        </body>
+      </html>
     `);
   } catch (error) {
     console.error('Error al obtener el perfil de usuario:', error.message);
-    res.send('Ocurrió un error al obtener el perfil de usuario');
+    res.send(`
+      <html>
+        <head>
+          <meta charset="UTF-8"/>
+          <title>Error</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+        </head>
+        <body class="bg-light">
+          <div class="container pt-5">
+            <div class="alert alert-danger" role="alert">
+              Ocurrió un error al obtener el perfil de usuario
+            </div>
+            <p>${error.message}</p>
+            <a class="btn btn-secondary" href="/">Regresar al inicio</a>
+          </div>
+        </body>
+      </html>
+    `);
   }
 });
 
